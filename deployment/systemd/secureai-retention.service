@@ -1,0 +1,9 @@
+[Unit]
+Description=SecureAI retention report
+Requires=docker.service
+After=docker.service
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/secureai/deployment
+ExecStart=/usr/bin/docker compose --profile ops run --rm maintenance python manage.py enforce_retention
+# Add --apply only after the organization's retention policy and hold workflow are approved.

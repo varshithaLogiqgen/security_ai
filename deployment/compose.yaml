@@ -1,0 +1,148 @@
+name: secureai
+x-app: &app
+  build:
+    context: ..
+    dockerfile: backend/Dockerfile
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs: [/tmp:size=128m,mode=1777]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  pids_limit: 128
+  mem_limit: 1g
+  cpus: 2
+  volumes: [private_data:/app/var, backups:/backups]
+  networks: [internal, outbound]
+  secrets: [django_secret, encryption_key, backup_key, database_url, oidc_secret, ollama_key]
+  environment: &environment
+    DJANGO_DEBUG: 'false'
+    SYNTHETIC_MODE: 'false'
+    LOCAL_AUTH_ENABLED: 'false'
+    DJANGO_SECRET_KEY_FILE: /run/secrets/django_secret
+    DATA_ENCRYPTION_KEY_FILE: /run/secrets/encryption_key
+    BACKUP_ENCRYPTION_KEY_FILE: /run/secrets/backup_key
+    DATABASE_URL_FILE: /run/secrets/database_url
+    DATABASE_SSLMODE: disable
+    ALLOWED_HOSTS: ${PUBLIC_HOST:?Set PUBLIC_HOST}
+    FRONTEND_URL: https://${PUBLIC_HOST}
+    CSRF_TRUSTED_ORIGINS: https://${PUBLIC_HOST}
+    TRUST_PROXY_HEADERS: 'true'
+    OIDC_ISSUER: ${OIDC_ISSUER:?Set OIDC_ISSUER}
+    OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?Set OIDC_CLIENT_ID}
+    OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_secret
+    OIDC_MFA_AMR: ${OIDC_MFA_AMR:-mfa,otp}
+    SCANNER_MODE: clamav
+    CLAMAV_HOST: clamav
+    AI_ADAPTER: apps.assistant.providers.OllamaProvider
+    AI_PROVIDER_APPROVED: ${AI_PROVIDER_APPROVED:-false}
+    AI_APPROVAL_REFERENCE: ${AI_APPROVAL_REFERENCE:-}
+    OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+    OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+    OLLAMA_API_KEY_FILE: /run/secrets/ollama_key
+    RETENTION_POLICY_REFERENCE: ${RETENTION_POLICY_REFERENCE:-}
+    CHAT_RETENTION_DAYS: ${CHAT_RETENTION_DAYS:-0}
+    DELETED_FILE_RETENTION_DAYS: ${DELETED_FILE_RETENTION_DAYS:-0}
+    AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-0}
+    BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-0}
+    BACKUP_ROOT: /backups
+  depends_on:
+    db: {condition: service_healthy}
+    clamav: {condition: service_healthy}
+services:
+  db:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: secureai_owner
+      POSTGRES_DB: secureai
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+    secrets: [postgres_password, app_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./init-db.sh:/docker-entrypoint-initdb.d/01-runtime-role.sh:ro
+    networks: [internal]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U secureai_owner -d secureai']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  clamav:
+    image: ${CLAMAV_IMAGE:-clamav/clamav:stable}
+    restart: unless-stopped
+    volumes: [clamav_data:/var/lib/clamav]
+    networks: [internal, outbound]
+    mem_limit: 3g
+    healthcheck:
+      test: [CMD, clamdcheck.sh]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+  migrate:
+    <<: *app
+    restart: 'no'
+    profiles: [ops]
+    environment:
+      <<: *environment
+      DATABASE_URL_FILE: /run/secrets/migration_database_url
+    secrets: [django_secret, encryption_key, backup_key, migration_database_url, oidc_secret, ollama_key]
+    command: [sh, -c, 'python manage.py migrate --noinput && python manage.py configure_runtime_role']
+  api:
+    <<: *app
+    healthcheck:
+      test: [CMD, python, manage.py, runtime_health]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+  worker:
+    <<: *app
+    command: [python, manage.py, process_documents]
+    mem_limit: 768m
+    cpus: 1
+  maintenance:
+    <<: *app
+    profiles: [ops]
+    restart: 'no'
+    command: [python, manage.py, production_verify]
+  web:
+    build:
+      context: ..
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+      TLS_EMAIL: ${TLS_EMAIL:?Set TLS_EMAIL}
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes: [caddy_data:/data, caddy_config:/config]
+    networks: [internal, outbound]
+    depends_on:
+      api: {condition: service_healthy}
+  ollama:
+    image: ollama/ollama:latest
+    profiles: [local-ai]
+    restart: unless-stopped
+    volumes: [ollama_data:/root/.ollama]
+    networks: [internal, outbound]
+    mem_limit: 8g
+networks:
+  internal: {internal: true}
+  outbound: {}
+volumes:
+  postgres_data: {}
+  private_data: {}
+  backups: {}
+  clamav_data: {}
+  caddy_data: {}
+  caddy_config: {}
+  ollama_data: {}
+secrets:
+  postgres_password: {file: ./secrets/postgres_password}
+  app_password: {file: ./secrets/app_password}
+  django_secret: {file: ./secrets/django_secret}
+  encryption_key: {file: ./secrets/encryption_key}
+  backup_key: {file: ./secrets/backup_key}
+  database_url: {file: ./secrets/database_url}
+  migration_database_url: {file: ./secrets/migration_database_url}
+  oidc_secret: {file: ./secrets/oidc_secret}
+  ollama_key: {file: ./secrets/ollama_key}

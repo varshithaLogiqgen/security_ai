@@ -1,0 +1,10 @@
+[Unit]
+Description=SecureAI encrypted database and file backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/secureai/deployment
+ExecStart=/usr/bin/docker compose --profile ops run --rm maintenance python manage.py backup_workspace
+# Configure OnFailure/monitoring and off-site copying for the selected host.

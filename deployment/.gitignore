@@ -1,0 +1,5 @@
+.env
+secrets/
+*.backup
+*.enc
+reports/

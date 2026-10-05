@@ -1,0 +1,8 @@
+.venv/
+.env
+var/
+__pycache__/
+*.pyc
+.coverage
+htmlcov/
+test-results.log
