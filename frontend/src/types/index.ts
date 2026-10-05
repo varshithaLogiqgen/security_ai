@@ -24,6 +24,7 @@ export interface Project {
   steward: string;
 }
 export interface Update {
+  is_blocked?: boolean;
   id: string;
   owner_id: string;
   owner_name: string;
@@ -105,4 +106,24 @@ export interface SearchResult {
   title: string;
   snippet: string;
   type: "document" | "update" | "profile";
+}
+
+export type DashboardView = "employee" | "lead" | "admin" | "security";
+export interface DashboardData {
+  view: DashboardView;
+  available_views: DashboardView[];
+  date: string;
+  event: string;
+  cards: Record<string, number>;
+  updates?: Update[];
+  projects?: Project[];
+  documents?: Document[];
+  teams?: { id: string; name: string; count: number; updates: Update[] }[];
+  blockers?: Update[];
+  accounts?: { id: string; name: string; email: string; active: boolean }[];
+  invitations?: { id: string; email: string; expires_at: string }[];
+  approvals?: Approval[];
+  events?: Audit[];
+  changes?: Audit[];
+  security_settings?: { name: string; value: string }[];
 }

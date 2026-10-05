@@ -50,7 +50,7 @@ def update(request,pk):
         if 'team_id' in data and data['team_id'] != obj.team_id: raise ValidationError('The team cannot be changed.')
         if obj.status == 'draft' and data.get('visibility','private') != 'private': raise ValidationError('Drafts must remain private.')
         revise(obj,request.user)
-        for key in ['body','visibility','work_date']:
+        for key in ['body','visibility','work_date','is_blocked']:
             if key in data: setattr(obj,key,data[key])
         obj.save()
         record(request.user,'update.revised',obj.pk)
@@ -79,3 +79,4 @@ def request_deletion(request,pk):
     if obj.status != 'published': raise ValidationError('Only published updates need removal approval.')
     removal_request(request.user,obj,'update_delete')
     return Response(update_data(obj,request.user),status=202)
+

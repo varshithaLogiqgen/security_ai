@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "../app/session";
 import { api } from "../services/api";
@@ -114,7 +115,9 @@ export function Administration({
 }
 function AdminContent({ view }: { view: "users" | "access" | "audit" }) {
   const session = useSession();
-  const [dialog, setDialog] = useState("");
+  const [params] = useSearchParams();
+  const action = params.get("action") || "";
+  const [dialog, setDialog] = useState(session.capabilities.includes("admin") && (view === "users" ? ["invite","team","project"].includes(action) : view === "access" && action === "access") ? action : "");
   const [cursor, setCursor] = useState("");
   const [filter, setFilter] = useState("");
   const [success, setSuccess] = useState("");

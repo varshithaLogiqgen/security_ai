@@ -192,6 +192,11 @@ export async function demoRequest<T>(
   let result: unknown;
   if (pathname === "/me") result = demoSession;
   else if (pathname === "/auth/logout") result = undefined;
+  else if (pathname === "/dashboard") {
+    const filters = new URLSearchParams(query);
+    if (filters.get("view") && filters.get("view") !== "employee") return missing();
+    result = { view:"employee",available_views:["employee"],date:new Date().toLocaleDateString("en-CA"),event:"all",cards:{drafts:updates.filter(u=>u.status==="draft").length,published:updates.filter(u=>u.status==="published").length,projects:projects.length,documents:documents.length},updates:updates.slice(0,5),projects:projects.slice(0,5),documents:documents.slice(0,5) };
+  }
   else if (pathname === "/projects") result = list(projects);
   else if (parts[0] === "projects") {
     const project = projects.find((p) => p.id === parts[1]);
@@ -227,6 +232,7 @@ export async function demoRequest<T>(
           team_name: "Payments",
           work_date: String(body.work_date),
           body: String(body.body),
+          is_blocked: Boolean(body.is_blocked),
           status: "draft",
           visibility: "private",
           version: 1,
@@ -258,6 +264,7 @@ export async function demoRequest<T>(
             date: new Date().toISOString(),
           });
         Object.assign(update, {
+          is_blocked: body.is_blocked ?? update.is_blocked,
           body: body.body ?? update.body,
           visibility: body.visibility ?? update.visibility,
           work_date: body.work_date ?? update.work_date,

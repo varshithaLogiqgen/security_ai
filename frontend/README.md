@@ -17,7 +17,9 @@ For real integration, set `VITE_DEMO_MODE=false` and configure `VITE_API_BASE_UR
 
 ## Implemented screens
 
-- Responsive dashboard, collapsible desktop sidebar, mobile navigation drawer, account sign-in/out and session-expired state.
+- Role dashboards for employees, team leads, organization admins and security reviewers, backed by `/dashboard` with exact authorized counts, date/event filters and quick actions. Multiple-role users can switch to their personal workspace. Leads see explicit blockers only on published lead-visible updates. Security configuration is read-only and never contains secrets.
+- The dashboard banner names the signed-in account and current view. An admin on Personal workspace can use “Open organization admin dashboard” to return to the organization view. Local direct links: `http://127.0.0.1:5174/?view=admin` for admins and `http://127.0.0.1:5174/?view=employee` for personal work. Unauthorized view choices are rejected by the API.
+- Collapsible desktop sidebar, mobile navigation drawer, account sign-in/out and session-expired state.
 - Projects and project members/documents; employee directory and work profiles.
 - Private drafts, revisions, publish/sharing confirmation, team-lead view from server assignments, deletion requests.
 - Document library, staged upload, status display, classification, member grants, widening approval request, replacement version, authorized download and removal request.

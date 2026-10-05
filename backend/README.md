@@ -47,6 +47,11 @@ Shared policy is in `apps/policy`; validation, concurrency, pagination, throttli
 
 ## API behavior
 
+- `/dashboard` selects the reader's current highest-privilege dashboard (security, organization admin, team lead, then employee). `?view=employee|lead|admin|security` switches between authorized views; the server denies unauthorized role choices. Responses include `available_views`, exact scoped `cards` counts and bounded recent sections. Lead/security dashboards accept `date=YYYY-MM-DD`; security additionally accepts `event=all|denials|permissions|scans|sessions`.
+- Updates accept `is_blocked` on creation/edit. A lead blocker is a published, lead-visible update explicitly marked blocked, for a team the reader currently leads. Draft/private blockers are never included. The selected date applies to blockers and team sections; the “today” card always uses the workspace's current local date.
+- Team leads can create their own private drafts for teams they currently lead, even without a separate employee membership. This does not allow them to edit another employee's update or read private content.
+- Organization dashboards expose account/invitation/assignment metadata and the administrator's own administrative events. Security dashboards expose tenant-scoped audit metadata, scan failures and non-secret read-only configuration summaries. Neither dashboard grants content access or mutable security settings.
+
 - Session cookies and CSRF protect mutations. `/auth/csrf` initializes the CSRF cookie; `/me` returns fresh capabilities. Session versions invalidate deactivated users immediately.
 - Unknown, cross-organization and inaccessible resources return the same 404 response. Admin roles do not confer content access.
 - Mutations of versioned content require `If-Match` or a body `version`. Conflicts return 409. Optional `Idempotency-Key` prevents replay of standard transactional mutations; repeated keys return 409 rather than replaying private response bodies.

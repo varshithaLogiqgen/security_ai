@@ -34,6 +34,7 @@ import {
 } from "../components/ui";
 import type { Update, List } from "../types";
 const schema = z.object({
+  is_blocked: z.boolean(),
   team_id: z.string().min(1),
   work_date: z.string().min(1),
   body: z
@@ -51,10 +52,12 @@ function UpdateForm({
 }) {
   const session = useSession();
   const navigate = useNavigate();
+  const writableTeams = Array.from(new Map([...session.teams, ...session.led_teams].map(team => [team.id, team])).values());
   const form = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      team_id: update?.team_id || session.teams[0]?.id || "",
+      is_blocked: update?.is_blocked || false,
+      team_id: update?.team_id || writableTeams[0]?.id || "",
       work_date: update?.work_date || new Date().toLocaleDateString("en-CA"),
       body: update?.body || "",
     },
@@ -87,7 +90,7 @@ function UpdateForm({
         <div className="form-grid">
           <Field label="Team">
             <select {...form.register("team_id")} disabled={!!update}>
-              {session.teams.map((t) => (
+              {writableTeams.map((t) => (
                 <option value={t.id} key={t.id}>
                   {t.name}
                 </option>
@@ -105,6 +108,8 @@ function UpdateForm({
             {...form.register("body")}
           />
         </Field>
+        <label className="blocker-toggle"><input type="checkbox" {...form.register("is_blocked")} /> Blocked / needs help</label>
+        <p className="fine">Your lead can see this only when you publish with lead-visible access.</p>
         {form.formState.errors.body && (
           <p className="field-error" role="alert">
             {form.formState.errors.body.message}
@@ -117,7 +122,7 @@ function UpdateForm({
           </button>
           <button
             className="button"
-            disabled={save.isPending || !session.teams.length}
+            disabled={save.isPending || !writableTeams.length}
           >
             {save.isPending
               ? "Saving…"
@@ -133,8 +138,8 @@ function UpdateForm({
 export function Updates() {
   const session = useSession();
   const [params, setParams] = useSearchParams();
-  const [filter, setFilter] = useState("all");
-  const [team, setTeam] = useState("");
+  const [filter, setFilter] = useState(params.get("status") || "all");
+  const [team, setTeam] = useState(params.get("team") || "");
   const [cursor, setCursor] = useState("");
   const query = useResource<List<Update>>(
     team
@@ -299,6 +304,7 @@ export function UpdateDetail() {
                 ? "Only you can read this update."
                 : "You and your current team lead can read this published update."}
             </div>
+            {u.is_blocked && <Badge tone="amber">Blocked / needs help</Badge>}
             <p className="prose">{u.body}</p>
             {u.owner_id === session.id && u.status !== "deletion_requested" && (
               <div className="actions">

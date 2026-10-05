@@ -52,7 +52,7 @@ def authorize(subject, action, resource=None):
         fields = ('id','name','email','title','team','bio')
     elif action in {'profile.edit','personal.read','personal.edit'}: allowed = resource.id == user.id
     elif action == 'project.read': allowed = member(user,resource)
-    elif action == 'update.create': allowed = team_member(user,resource)
+    elif action == 'update.create': allowed = team_member(user,resource) or leads(user,resource)
     elif action == 'team.updates': allowed = leads(user,resource)
     elif action == 'update.read':
         allowed = resource.status != 'deleted' and (resource.owner_id == user.id or (resource.status in {'published','deletion_requested'} and resource.visibility == 'lead_visible' and leads(user,resource.team)))

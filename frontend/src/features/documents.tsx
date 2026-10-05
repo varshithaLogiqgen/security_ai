@@ -145,7 +145,7 @@ export function Documents() {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
   const [cursor, setCursor] = useState("");
-  const [upload, setUpload] = useState(false);
+  const [upload, setUpload] = useState(params.get("new") === "1");
   const query = useResource<List<Document>>(
     `/documents?q=${encodeURIComponent(q)}&cursor=${encodeURIComponent(cursor)}${filter === "all" ? "" : `&classification=${filter}`}${params.get("project") ? `&project_id=${encodeURIComponent(params.get("project")!)}` : ""}`,
   );

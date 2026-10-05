@@ -2,6 +2,7 @@ from django.db import models
 from apps.core.models import TenantRecord
 
 class WorkUpdate(TenantRecord):
+    is_blocked = models.BooleanField(default=False)
     owner = models.ForeignKey('identity.User', on_delete=models.PROTECT)
     team = models.ForeignKey('projects.Team', on_delete=models.PROTECT)
     work_date = models.DateField()

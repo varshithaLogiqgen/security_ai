@@ -2274,3 +2274,31 @@ summary {
     scroll-behavior: auto !important;
   }
 }
+/* Role dashboards retain the workspace spacing and adapt to narrow screens. */
+.dashboard-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dashboard-toolbar { align-items: end; flex-wrap: wrap; }
+.dashboard-role-banner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 24px; margin-bottom: 20px; border: 1px solid #dce6f2; border-left: 4px solid #478268; border-radius: 12px; background: #fff; }
+.dashboard-role-banner h2 { margin: 5px 0 8px; font-size: 24px; }
+.dashboard-role-banner p { margin: 0; color: #59677c; }
+.dashboard-role-admin { border-left-color: #365c96; background: #f0f5fd; }
+.dashboard-role-security { border-left-color: #8260b6; background: #f7f3fc; }
+.dashboard-role-lead { border-left-color: #ae7b30; background: #fffaf0; }
+.dashboard-role-hint { flex-basis: 100%; padding-top: 12px; border-top: 1px solid #dce6f2; }
+.dashboard-toolbar .tabs { flex-wrap: wrap; }
+.dashboard-filter { display: grid; gap: 6px; font-size: 13px; color: #59677c; }
+.dashboard-filter input, .dashboard-filter select { padding: 9px 12px; border: 1px solid #dbe3ef; border-radius: 9px; background: white; font: inherit; }
+.dashboard-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 24px; }
+.assistant-promo.dashboard-ai { display: block; }
+.dashboard-team + .dashboard-team { border-top: 1px solid #e8edf5; padding-top: 16px; margin-top: 16px; }
+.dashboard-timeline { list-style: none; padding: 0; margin: 0; }
+.dashboard-timeline li { border-left: 2px solid #dfe8f6; padding: 0 0 22px 16px; overflow-wrap: anywhere; }
+.dashboard-timeline p { margin: 7px 0; }
+.dashboard-timeline small, .dashboard-timeline details { color: #627086; font-size: 12px; }
+.dashboard-timeline details { margin-top: 8px; }
+.dashboard-settings { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.dashboard-settings dt { color: #627086; font-size: 13px; }
+.dashboard-settings dd { margin: 6px 0 0; overflow-wrap: anywhere; }
+.blocker-toggle { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+.blocker-toggle input { width: auto; }
+@media (max-width: 1100px) { .dashboard-stats { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 600px) { .dashboard-stats, .dashboard-settings { grid-template-columns: 1fr; } .dashboard-filter { width: 100%; } }
